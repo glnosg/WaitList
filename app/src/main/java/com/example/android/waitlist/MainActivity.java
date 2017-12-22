@@ -11,6 +11,7 @@ import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.example.android.waitlist.data.WaitlistContract;
 import com.example.android.waitlist.data.WaitlistDbHelper;
@@ -74,12 +75,8 @@ public class MainActivity extends AppCompatActivity {
                 // COMPLETED (8) Inside, get the viewHolder's itemView's tag and store in a long variable id
                 //get the id of the item being swiped
                 long id = (long) viewHolder.itemView.getTag();
-                // COMPLETED (9) call removeGuest and pass through that id
-                //remove from DB
-                removeGuest(id);
-                // COMPLETED (10) call swapCursor on mAdapter passing in getAllGuests() as the argument
-                //update the list
-                mAdapter.swapCursor(getAllGuests());
+
+                new MyUndoBar(findViewById(R.id.fl_undo_bar), id).start();
             }
 
             //COMPLETED (11) attach the ItemTouchHelper to the waitlistRecyclerView
@@ -162,6 +159,28 @@ public class MainActivity extends AppCompatActivity {
     private boolean removeGuest(long id) {
         // COMPLETED (2) Inside, call mDb.delete to pass in the TABLE_NAME and the condition that WaitlistEntry._ID equals id
         return mDb.delete(WaitlistContract.WaitlistEntry.TABLE_NAME, WaitlistContract.WaitlistEntry._ID + "=" + id, null) > 0;
+    }
+
+    private class MyUndoBar extends UndoBar {
+
+        private long mId;
+
+        public MyUndoBar (View v, long id) {
+            super(v);
+            mId = id;
+        }
+
+        @Override
+        public void onUndoClicked() {
+            Toast.makeText(getBaseContext(), "Undo clicked", Toast.LENGTH_SHORT).show();
+            mAdapter.swapCursor(getAllGuests());
+        }
+        @Override
+        public void onUndoNotClicked() {
+            Toast.makeText(getBaseContext(), "Undo NOT clicked", Toast.LENGTH_SHORT).show();
+            removeGuest(mId);
+            mAdapter.swapCursor(getAllGuests());
+        }
     }
 
 }

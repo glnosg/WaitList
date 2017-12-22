@@ -44,9 +44,40 @@
         android:text="@string/add_button_text"
         android:textAppearance="@style/TextAppearance.AppCompat.Widget.Button.Inverse" />
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/all_guests_list_view"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent">
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/all_guests_list_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <FrameLayout
+            android:id="@+id/fl_undo_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:visibility="gone">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:background="@color/colorPrimary"/>
+
+            <TextView
+                android:id="@+id/tv_undo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FFFFFF"
+                android:text="UNDO"
+                android:layout_marginRight="8dp"
+                android:padding="2dp"
+                android:layout_gravity="center_vertical|right"
+                android:textAppearance="@style/TextAppearance.AppCompat.Widget.Button.Inverse"/>
+
+        </FrameLayout>
+
+    </FrameLayout>
 
 </LinearLayout>
