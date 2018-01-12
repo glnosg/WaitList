@@ -14,7 +14,7 @@ public class TestUtil {
             return;
         }
         //create a list of fake guests
-        List<ContentValues> list = new ArrayList<ContentValues>();
+        List<ContentValues> list = new ArrayList<>();
 
         ContentValues cv = new ContentValues();
         cv.put(WaitlistContract.WaitlistEntry.COLUMN_GUEST_NAME, "John");

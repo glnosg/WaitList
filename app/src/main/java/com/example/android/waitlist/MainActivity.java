@@ -4,19 +4,24 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Canvas;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import com.example.android.waitlist.data.WaitlistContract;
 import com.example.android.waitlist.data.WaitlistDbHelper;
-
 
 public class MainActivity extends AppCompatActivity {
 
@@ -26,6 +31,10 @@ public class MainActivity extends AppCompatActivity {
     private EditText mNewPartySizeEditText;
     private final static String LOG_TAG = MainActivity.class.getSimpleName();
     private SwipeController swipeController = null;
+
+    private UndoHandler mUndoHandler;
+    private Menu mMenu;
+    private Toast mToast;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
         // Keep a reference to the mDb until paused or killed. Get a writable database
         // because you will be adding restaurant customers
         mDb = dbHelper.getWritableDatabase();
+        mUndoHandler = new UndoHandler(mDb);
 
         // Get all guest info from the database and save in a cursor
         Cursor cursor = getAllGuests();
@@ -62,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
         swipeController = new SwipeController(new SwipeControllerAction() {
             @Override
             public void onButtonClicked(long id) {
-                Toast.makeText(getBaseContext(), "DELETE button clicked", Toast.LENGTH_SHORT).show();
+                showToast("DELETE button clicked");
                 removeGuest(id);
                 mAdapter.swapCursor(getAllGuests());
             }
@@ -77,6 +87,33 @@ public class MainActivity extends AppCompatActivity {
                 swipeController.onDraw(c);
             }
         });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        this.mMenu = menu;
+        /* Use AppCompatActivity's method getMenuInflater to get a handle on the menu inflater */
+        MenuInflater inflater = getMenuInflater();
+        /* Use the inflater's inflate method to inflate our visualizer_menu layout to this menu */
+        inflater.inflate(R.menu.menu_action, menu);
+        /* Return true so that the visualizer_menu is displayed in the Toolbar */
+//        menu.findItem(R.id.action_undo).setEnabled(false);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.action_undo) {
+            showToast("UNDO button clicked");
+            mUndoHandler.onUndo();
+            mAdapter.swapCursor(getAllGuests());
+            setUndoButtonState(mMenu);
+
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     /**
@@ -153,7 +190,49 @@ public class MainActivity extends AppCompatActivity {
      */
     private boolean removeGuest(long id) {
         // COMPLETED (2) Inside, call mDb.delete to pass in the TABLE_NAME and the condition that WaitlistEntry._ID equals id
-        return mDb.delete(WaitlistContract.WaitlistEntry.TABLE_NAME, WaitlistContract.WaitlistEntry._ID + "=" + id, null) > 0;
+        mUndoHandler.onDelete((int) id);
+        setUndoButtonState(mMenu);
+
+        return mDb.delete(
+                WaitlistContract.WaitlistEntry.TABLE_NAME,
+                WaitlistContract.WaitlistEntry._ID + "=" + id,
+                null) > 0;
     }
 
+    private void showToast(String text) {
+        if (mToast != null)
+            mToast.cancel();
+        mToast = Toast.makeText(this, text, Toast.LENGTH_SHORT);
+        mToast.show();
+    }
+
+    private void setUndoButtonState(Menu menu) {
+
+        if (mUndoHandler.getUndoButtonState())
+            setUndoButtonEnabled(menu);
+        else
+            setUndoButtonDisabled(menu);
+    }
+
+    private void setUndoButtonEnabled(Menu menu) {
+
+        Drawable undoIcon = ContextCompat.getDrawable(this, R.drawable.ic_undo_black);
+        MenuItem undoButton = menu.findItem(R.id.action_undo);
+
+        undoIcon.mutate().setColorFilter(
+                ContextCompat.getColor(this, R.color.undoButtonEnabled), PorterDuff.Mode.SRC_IN);
+        undoButton.setIcon(undoIcon);
+        undoButton.setEnabled(true);
+    }
+
+    private void setUndoButtonDisabled(Menu menu) {
+
+        Drawable undoIcon = ContextCompat.getDrawable(this, R.drawable.ic_undo_black);
+        MenuItem undoButton = menu.findItem(R.id.action_undo);
+
+        undoIcon.mutate().setColorFilter(
+                ContextCompat.getColor(this, R.color.undoButtonDisabled), PorterDuff.Mode.SRC_IN);
+        undoButton.setIcon(undoIcon);
+        undoButton.setEnabled(false);
+    }
 }
