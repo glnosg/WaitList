@@ -16,6 +16,9 @@ import java.util.List;
 
 public class UndoHandler {
 
+    // Constant defining number of enabled undos
+    private static final int HOW_MANY_UNDOS_ENABLED = 5;
+
     // Database from which records are deleted
     private SQLiteDatabase mDb;
     // Flag defining current state of undo button
@@ -173,12 +176,12 @@ public class UndoHandler {
     // Handles adding last deleted element to the appropriate lists
     private void addLastDeletedToList(ContentValues record, Integer id) {
 
-        if (mLastFiveDeletedRecords.size() < 5) {
+        if (mLastFiveDeletedRecords.size() < HOW_MANY_UNDOS_ENABLED) {
 
             mLastFiveDeletedRecords.add(record);
             mLastFiveDeletedIDs.add(id);
 
-        } else if (mLastFiveDeletedRecords.size() >=5) {
+        } else if (mLastFiveDeletedRecords.size() >= HOW_MANY_UNDOS_ENABLED) {
 
             mLastFiveDeletedRecords.remove(0);
             mLastFiveDeletedIDs.remove(0);
